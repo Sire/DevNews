@@ -35,12 +35,20 @@ namespace NewsletterCurator.Web
                 services.AddDbContext<NewsletterCuratorContext>(options => options.UseNpgsql(Configuration.GetConnectionString("NewsletterCuratorContext"), builder => builder.MigrationsAssembly("NewsletterCurator.Data.Postgres")));
             else if (Configuration.GetValue<string>("DBType").Equals("mssql", StringComparison.InvariantCultureIgnoreCase))
                 services.AddDbContext<NewsletterCuratorContext>(options => options.UseSqlServer(Configuration.GetConnectionString("NewsletterCuratorContext"), builder => builder.MigrationsAssembly("NewsletterCurator.Data.SqlServer")));
+            else
+                throw new Exception("DBType should be postgres or mssql");
 
-            services.AddTransient(s => new EmailService.EmailService(new System.Net.Mail.SmtpClient(Configuration.GetValue<string>("SMTP:Host"), Configuration.GetValue<int>("SMTP:Port"))
-            {
-                Credentials = new System.Net.NetworkCredential(Configuration.GetValue<string>("SMTP:Username"), Configuration.GetValue<string>("SMTP:Password")),
-                EnableSsl = Configuration.GetValue<bool>("SMTP:EnableSsl")
-            }, Configuration.GetValue<string>("Mail:List-Unsubscribe-Mail")));
+            var unsubscribeMail = Configuration.GetValue<string>("Mail:List-Unsubscribe-Mail");
+            var fromEmail = Configuration.GetValue<string>("Mail:List-From-Mail");
+            var fromName = Configuration.GetValue<string>("Mail:List-From-Name");
+
+            services.AddTransient(s =>  new EmailService.EmailService(
+                new System.Net.Mail.SmtpClient(Configuration.GetValue<string>("SMTP:Host"), Configuration.GetValue<int>("SMTP:Port"))
+                {
+                    Credentials = new System.Net.NetworkCredential(Configuration.GetValue<string>("SMTP:Username"), Configuration.GetValue<string>("SMTP:Password")),
+                    EnableSsl = Configuration.GetValue<bool>("SMTP:EnableSsl")
+                },
+                fromEmail, fromName, unsubscribeMail));
             services.AddTransient(s=> new BaseClientService.Initializer() {
                 ApiKey = Configuration.GetValue<string>("YouTubeKey"),
                 ApplicationName = this.GetType().ToString()

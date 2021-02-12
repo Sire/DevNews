@@ -43,7 +43,10 @@ namespace NewsletterCurator.Web.Controllers
 
             await addToGitHubArchive(webSrc, newsletterFilename);
 
-            await emailService.SendAsync(emailSrc, await newsletterCuratorContext.Subscribers.Where(s => s.DateUnsubscribed == null && s.DateValidated != null).Select(s => s.Email).ToListAsync());
+            //FIXME: most interesting story as subject line
+            string subjectLine = $"Newsletter {DateTime.Now.ToString("d MMM")}";
+
+            await emailService.SendAsync(emailSrc, subjectLine, await newsletterCuratorContext.Subscribers.Where(s => s.DateUnsubscribed == null && s.DateValidated != null).Select(s => s.Email).ToListAsync());
 
             newsletterCuratorContext.Newsitems.RemoveRange(newsletterCuratorContext.Newsitems);
             await newsletterCuratorContext.SaveChangesAsync();
